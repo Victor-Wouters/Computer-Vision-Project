@@ -85,3 +85,5 @@ if __name__ == '__main__':
         sys.exit("Please provide path to input and output video files! See --help")
 
     main(args.input, args.output)
+
+    # python Bear.py -i bear1.mp4 -o bear2.mp4
