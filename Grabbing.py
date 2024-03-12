@@ -55,8 +55,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                lower_brown_rgb = np.array([100, 90, 30])
-                upper_brown_rgb = np.array([200, 160, 130])
+                lower_brown_rgb = np.array([200, 0, 0])
+                upper_brown_rgb = np.array([255, 0, 0])
 
                 # Create mask directly in RGB space
                 mask_rgb = cv2.inRange(RGB_image, lower_brown_rgb, upper_brown_rgb)
