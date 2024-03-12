@@ -35,11 +35,12 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 
                 # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
                 # Step 2: Convert to HSV
+                
                 hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 
                 # Step 3: Define the range of your target color in HSV
-                lower_color_bound = np.array([10, 60, 50])
-                upper_color_bound = np.array([30, 255, 255])
+                lower_color_bound = np.array([150, 0, 100])
+                upper_color_bound = np.array([170, 255, 255])
 
                 # Create a mask with the specified color range
                 mask_hsv = cv2.inRange(hsv_image, lower_color_bound, upper_color_bound)
@@ -55,8 +56,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                lower_brown_rgb = np.array([200, 0, 0])
-                upper_brown_rgb = np.array([255, 0, 0])
+                lower_brown_rgb = np.array([140, 40, 90])
+                upper_brown_rgb = np.array([255, 255, 255])
 
                 # Create mask directly in RGB space
                 mask_rgb = cv2.inRange(RGB_image, lower_brown_rgb, upper_brown_rgb)

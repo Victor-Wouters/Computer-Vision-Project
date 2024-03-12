@@ -52,7 +52,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 frame = cv2.bilateralFilter(frame, 9, 75, 75)
 
             if between(cap, 10000, 12000):
-                frame = cv2.bilateralFilter(frame, 9, 115, 115)
+                frame = cv2.bilateralFilter(frame, 21, 75, 75)
 
             # write frame that you processed to output
             out.write(frame)
