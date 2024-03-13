@@ -31,7 +31,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
         if ret:
             if cv2.waitKey(28) & 0xFF == ord('q'):
                 break
-            if between(cap, 0, 10000):
+            if between(cap, 13000, 30000):
                 
                 # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
                 # Step 2: Convert to HSV
@@ -52,7 +52,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
 
                 # Step 4: Apply the mask
-                frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
+                #frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -68,17 +68,23 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
-                # Step 4: Apply the mask
-                new_color = [255, 255, 255]  # BGR for red
+                # Ensure the mask is a 2D array, and frame is your original image.
+                height, width = frame.shape[:2]
 
-                # Create a color layer with the same dimensions as the frame, but filled with the new color
-                color_layer = np.zeros_like(frame)
-                color_layer[:] = new_color
+                # Create an empty array of the same shape as the frame to hold the shifted pixels
+                shifted_frame = np.zeros_like(frame)
 
-                # Use the final mask to blend the color layer onto the original frame
-                # Only the areas with mask=255 will be colored
-                frame = cv2.bitwise_and(frame, frame, mask=final_mask)
-                frame = np.where(final_mask[:, :, np.newaxis] == 255, color_layer, frame)
+                # Calculate the safe shift to avoid index out of range errors
+                safe_shift = min(275, height)
+
+                # Copy pixels from 100 pixels lower to their new position
+                # We only shift up to 'height - safe_shift' to avoid accessing out of bounds
+                shifted_frame[:height-safe_shift] = frame[safe_shift:]
+
+                # Now, where the mask is 255 (object is detected), replace the original frame's pixel
+                # with the corresponding pixel from 'shifted_frame'
+                frame = np.where(final_mask[:, :, np.newaxis] == 255, shifted_frame, frame)
+
                 
                 
             # write frame that you processed to output

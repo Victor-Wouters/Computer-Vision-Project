@@ -18,14 +18,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
     total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
-
-    #print(f"The video is {duration_seconds} seconds long.")
-    # while loop where the real work happens
+    
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -52,7 +45,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
 
                 # Step 4: Apply the mask
-                frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
+                #frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -69,7 +62,27 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
                 # Step 4: Apply the mask
-                new_color = [255, 255, 255]  # BGR for red
+                # Calculate the segment size for each color change
+                segment_size = (10000 - 0) // (7 * 13)  # 7 colors, repeated 4 times
+
+                # Determine the segment based on the current 'cap' value
+                segment = (int(cap.get(cv2.CAP_PROP_POS_MSEC)) - 0) // segment_size
+
+                # Map the segment to a rainbow color, cycling through the colors 4 times
+                if segment % 7 == 0:
+                    new_color = [0, 0, 255]  # BGR for red
+                elif segment % 7 == 1:
+                    new_color = [0, 127, 255]  # BGR for orange
+                elif segment % 7 == 2:
+                    new_color = [0, 255, 255]  # BGR for yellow
+                elif segment % 7 == 3:
+                    new_color = [0, 255, 0]  # BGR for green
+                elif segment % 7 == 4:
+                    new_color = [255, 0, 0]  # BGR for blue
+                elif segment % 7 == 5:
+                    new_color = [130, 0, 75]  # BGR for indigo (approximation)
+                elif segment % 7 == 6:
+                    new_color = [180, 0, 130]  # BGR for violet (approximation)
 
                 # Create a color layer with the same dimensions as the frame, but filled with the new color
                 color_layer = np.zeros_like(frame)
@@ -77,9 +90,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 # Use the final mask to blend the color layer onto the original frame
                 # Only the areas with mask=255 will be colored
-                frame = cv2.bitwise_and(frame, frame, mask=final_mask)
                 frame = np.where(final_mask[:, :, np.newaxis] == 255, color_layer, frame)
-                
+                #frame = cv2.bitwise_and(frame, frame, mask=final_mask)
                 
             # write frame that you processed to output
             out.write(frame)
