@@ -52,7 +52,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
 
                 # Step 4: Apply the mask
-                frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
+                #frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -69,7 +69,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
                 # Step 4: Apply the mask
-                new_color = [255, 255, 255]  # BGR for red
+                new_color = [255, 255, 255]  # BGR for white
 
                 # Create a color layer with the same dimensions as the frame, but filled with the new color
                 color_layer = np.zeros_like(frame)
