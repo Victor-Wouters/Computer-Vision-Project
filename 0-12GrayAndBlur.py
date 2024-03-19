@@ -16,15 +16,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
-
-    #print(f"The video is {duration_seconds} seconds long.")
-    # while loop where the real work happens
+    
+   
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -83,4 +76,3 @@ if __name__ == '__main__':
 
     main(args.input, args.output)
 
-    # python Bear.py -i bear1.mp4 -o bear2.mp4

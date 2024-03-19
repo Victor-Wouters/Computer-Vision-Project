@@ -17,14 +17,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
-
-    #print(f"The video is {duration_seconds} seconds long.")
+    
+   
     # while loop where the real work happens
     while cap.isOpened():
         ret, frame = cap.read()
@@ -33,7 +27,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 break
             if between(cap, 1000, 9000):
                       
-                hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)   # HSV image
             
                 lower_color_bound = np.array([25, 100, 100])
                 upper_color_bound = np.array([35, 255, 255])
@@ -43,10 +37,10 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 kernel = np.ones((5,5),np.uint8)
 
-                mask_hsv_improved = cv2.morphologyEx(mask_hsv, cv2.MORPH_CLOSE, kernel)
+                mask_hsv_improved = cv2.morphologyEx(mask_hsv, cv2.MORPH_CLOSE, kernel)     # HSV improvements
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
                 
-                RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)      # RGB image
 
                 lower_brown_rgb = np.array([150, 150, 0])
                 upper_brown_rgb = np.array([255, 255, 100])
@@ -55,19 +49,19 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 mask_rgb_original = mask_rgb.copy()
                 
                 kernel = np.ones((5,5),np.uint8)
-                mask_rgb_improved = cv2.morphologyEx(mask_rgb, cv2.MORPH_CLOSE, kernel)
+                mask_rgb_improved = cv2.morphologyEx(mask_rgb, cv2.MORPH_CLOSE, kernel)     # RGB improvements
                 mask_rgb_improved = cv2.morphologyEx(mask_rgb_improved, cv2.MORPH_OPEN, kernel)
 
-                mask_hsv_combined = np.where(mask_hsv_improved > mask_hsv_original, 2, mask_hsv_original)
+                mask_hsv_combined = np.where(mask_hsv_improved > mask_hsv_original, 2, mask_hsv_original)   # Keep track of improvements
                 mask_rgb_combined = np.where(mask_rgb_improved > mask_rgb_original, 2, mask_rgb_original)
 
-                basic_mask_combined = cv2.bitwise_or(mask_hsv_original, mask_rgb_original)
+                basic_mask_combined = cv2.bitwise_or(mask_hsv_original, mask_rgb_original)      # combine HSV and RGB
                 improved_mask_combined = cv2.bitwise_or(mask_hsv_combined, mask_rgb_combined)
                 
                 color_white = [255, 255, 255]
                 color = [0, 255, 0]
 
-                final_image = np.zeros_like(frame)
+                final_image = np.zeros_like(frame)                                              # Visualize with black background, white mask and green improvements
                 final_image[basic_mask_combined > 0] = color_white
                 improvement_areas = cv2.subtract(improved_mask_combined, basic_mask_combined)
                 final_image[improvement_areas > 0] = color

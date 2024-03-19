@@ -17,15 +17,8 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
 
-    #print(f"The video is {duration_seconds} seconds long.")
-    # while loop where the real work happens
+   
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -33,8 +26,6 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 break
             if between(cap, 500, 3500):
                 
-                # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
-                # Step 2: Convert to HSV
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 
                 # Horizontal edges
@@ -42,25 +33,22 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 # Vertical edges
                 sobel_vertical = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-                # Convert edge maps to positive values
+
+                # Convert to positive values
                 abs_sobel_horizontal = cv2.convertScaleAbs(sobel_horizontal)
                 abs_sobel_vertical = cv2.convertScaleAbs(sobel_vertical)
     
-                
-                final_mask = cv2.bitwise_or(abs_sobel_horizontal,abs_sobel_vertical)
+                # Visualize with black background and edges in red
+                final_mask = cv2.bitwise_or(abs_sobel_horizontal,abs_sobel_vertical)        # Combine horizontal and vertical edges
                 _, edges_thresholded = cv2.threshold(final_mask, 100, 255, cv2.THRESH_BINARY)
-                #edges_colored = cv2.cvtColor(edges_thresholded, cv2.COLOR_GRAY2BGR)  # Convert edges to BGR
-                #frame = cv2.addWeighted(frame, 0.9, edges_thresholded, 0.1, 0)
-                #frame[edges_thresholded == 255] = [0, 0, 255]
-
                 red_edges = np.zeros_like(frame)
                 red_edges[edges_thresholded == 255] = [0, 0, 255]
                 frame = red_edges
-                #frame = cv2.bitwise_and(frame, frame, mask=edges_thresholded)
+                
+
             if between(cap, 3500, 5000):
                 
-                # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
-                # Step 2: Convert to HSV
+                # Same but with kernelsize 5
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 
                 # Horizontal edges
@@ -68,21 +56,18 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 # Vertical edges
                 sobel_vertical = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
-                # Convert edge maps to positive values
+
+                # Convert to positive values
                 abs_sobel_horizontal = cv2.convertScaleAbs(sobel_horizontal)
                 abs_sobel_vertical = cv2.convertScaleAbs(sobel_vertical)
     
-                
-                final_mask = cv2.bitwise_or(abs_sobel_horizontal,abs_sobel_vertical)
+                # Visualize with black background and edges in red
+                final_mask = cv2.bitwise_or(abs_sobel_horizontal,abs_sobel_vertical)         # Combine horizontal and vertical edges
                 _, edges_thresholded = cv2.threshold(final_mask, 100, 255, cv2.THRESH_BINARY)
-                #edges_colored = cv2.cvtColor(edges_thresholded, cv2.COLOR_GRAY2BGR)  # Convert edges to BGR
-                #frame = cv2.addWeighted(frame, 0.9, edges_thresholded, 0.1, 0)
-                #frame[edges_thresholded == 255] = [0, 0, 255]
-
                 red_edges = np.zeros_like(frame)
                 red_edges[edges_thresholded == 255] = [0, 0, 255]
                 frame = red_edges
-                #frame = cv2.bitwise_and(frame, frame, mask=edges_thresholded)
+                
                 
             # write frame that you processed to output
             out.write(frame)
@@ -116,4 +101,3 @@ if __name__ == '__main__':
 
     main(args.input, args.output)
 
-#python Bear.py -i bear1.mp4 -o bear2.mp4

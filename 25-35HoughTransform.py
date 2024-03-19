@@ -17,15 +17,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
-
-    #print(f"The video is {duration_seconds} seconds long.")
-    # while loop where the real work happens
+    
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -33,6 +25,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 break
             if between(cap, 6000, 9000):
                 
+                # Parameters not strict as last
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1, minDist=50, param1=145, param2=22, minRadius=50, maxRadius=500)
 
@@ -43,6 +36,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                         cv2.circle(frame, (x,y), 2, (0,0,255), -1)
             if between(cap, 3000, 6000):
                 
+                # Parameters less strict
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1, minDist=50, param1=165, param2=25, minRadius=50, maxRadius=500)
 
@@ -54,6 +48,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
             if between(cap, 0, 3000):
                 
+                # Parameters strict as first
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1, minDist=50, param1=190, param2=28, minRadius=50, maxRadius=500)
 

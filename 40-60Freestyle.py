@@ -17,7 +17,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+  
     
     while cap.isOpened():
         ret, frame = cap.read()
@@ -26,33 +26,24 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 break
             if between(cap, 0, 11000):
                 
-                # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
-                # Step 2: Convert to HSV
-                
+                # Again grabbing the Fish with HSV and RGB mask
                 hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 
-                # Step 3: Define the range of your target color in HSV
                 lower_color_bound = np.array([25, 100, 100])
                 upper_color_bound = np.array([35, 255, 255])
 
-                # Create a mask with the specified color range
                 mask_hsv = cv2.inRange(hsv_image, lower_color_bound, upper_color_bound)
 
                 kernel = np.ones((5,5),np.uint8)
 
-                # Improve HSV mask
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv, cv2.MORPH_CLOSE, kernel)
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
-
-                # Step 4: Apply the mask
-                #frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                 lower_brown_rgb = np.array([150, 150, 0])
                 upper_brown_rgb = np.array([255, 255, 100])
 
-                # Create mask directly in RGB space
                 mask_rgb = cv2.inRange(RGB_image, lower_brown_rgb, upper_brown_rgb)
                 
                 kernel = np.ones((5,5),np.uint8)
@@ -61,14 +52,14 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
-                # Step 4: Apply the mask
-                # Calculate the segment size for each color change
-                segment_size = (10000 - 0) // (7 * 13)  # 7 colors, repeated 4 times
 
-                # Determine the segment based on the current 'cap' value
+                # Segment size for each color change
+                segment_size = (10000 - 0) // (7 * 13)  # 7 colors, repeated 13 times
+
+                # Determine the segment
                 segment = (int(cap.get(cv2.CAP_PROP_POS_MSEC)) - 0) // segment_size
 
-                # Map the segment to a rainbow color, cycling through the colors 4 times
+                # Assign the segment to a rainbow color, cycling through the colors 13 times
                 if segment % 7 == 0:
                     new_color = [0, 0, 255]  # BGR for red
                 elif segment % 7 == 1:
@@ -88,39 +79,30 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 color_layer = np.zeros_like(frame)
                 color_layer[:] = new_color
 
-                # Use the final mask to blend the color layer onto the original frame
+                # Use the final mask to put the color layer onto the original frame
                 # Only the areas with mask=255 will be colored
                 frame = np.where(final_mask[:, :, np.newaxis] == 255, color_layer, frame)
-                #frame = cv2.bitwise_and(frame, frame, mask=final_mask)
+                
             if between(cap, 12000, 20000):
                 
-                # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
-                # Step 2: Convert to HSV
-                
+                # Same as before
                 hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 
-                # Step 3: Define the range of your target color in HSV
                 lower_color_bound = np.array([25, 100, 100])
                 upper_color_bound = np.array([35, 255, 255])
 
-                # Create a mask with the specified color range
                 mask_hsv = cv2.inRange(hsv_image, lower_color_bound, upper_color_bound)
 
                 kernel = np.ones((5,5),np.uint8)
 
-                # Improve HSV mask
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv, cv2.MORPH_CLOSE, kernel)
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
-
-                # Step 4: Apply the mask
-                #frame = cv2.bitwise_and(frame, frame, mask=mask_hsv_improved)
                 
                 RGB_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                 lower_brown_rgb = np.array([150, 150, 0])
                 upper_brown_rgb = np.array([255, 255, 100])
 
-                # Create mask directly in RGB space
                 mask_rgb = cv2.inRange(RGB_image, lower_brown_rgb, upper_brown_rgb)
                 
                 kernel = np.ones((5,5),np.uint8)
@@ -129,23 +111,25 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
-                # Ensure the mask is a 2D array, and frame is your original image.
+
+                # Keep track of height and width of frame.
                 height, width = frame.shape[:2]
 
                 # Create an empty array of the same shape as the frame to hold the shifted pixels
                 shifted_frame = np.zeros_like(frame)
 
-                # Calculate the safe shift to avoid index out of range errors
+                # Calculate the safe shift to avoid index out of range errors, shift 230 pixels down and 230 pixels to the left
                 safe_shift_down = min(230, height)
                 safe_shift_left = max(0, min(230, width - 1))
 
-                # Copy pixels from 100 pixels lower to their new position
-                # We only shift up to 'height - safe_shift' to avoid accessing out of bounds
+                # Copy pixels from 230 pixels lower and 230 pixels to the left to their new position
+                # Avoid accessing out of bounds
                 shifted_frame[:height-safe_shift_down, :width-safe_shift_left] = frame[safe_shift_down:height, safe_shift_left:width]
 
-                # Now, where the mask is 255 (object is detected), replace the original frame's pixel
+                # Where the mask=255 replace the original frame's pixel
                 # with the corresponding pixel from 'shifted_frame'
                 frame = np.where(final_mask[:, :, np.newaxis] == 255, shifted_frame, frame)
+                
             # write frame that you processed to output
             out.write(frame)
 

@@ -17,15 +17,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')        # saving output video as .mp4
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
-    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    # Get the frame rate of the video
-    #fps = cap.get(cv2.CAP_PROP_FPS)
-    #print(fps)
-    # Calculate the duration in seconds
-    #duration_seconds = total_frames / fps
-
-    #print(f"The video is {duration_seconds} seconds long.")
-    # while loop where the real work happens
+    
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -33,21 +25,16 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 break
             if between(cap, 0, 3000):
                 
-                # do something using OpenCV functions (skipped here so we simply write the input frame back to output)
-                # Step 2: Convert to HSV
-                
+                # Same procedure used as before to grab the Fish with HSV and RGB mask
                 hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 
-                # Step 3: Define the range of your target color in HSV
                 lower_color_bound = np.array([25, 100, 100])
                 upper_color_bound = np.array([35, 255, 255])
 
-                # Create a mask with the specified color range
                 mask_hsv = cv2.inRange(hsv_image, lower_color_bound, upper_color_bound)
 
                 kernel = np.ones((5,5),np.uint8)
 
-                # Improve HSV mask
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv, cv2.MORPH_CLOSE, kernel)
                 mask_hsv_improved = cv2.morphologyEx(mask_hsv_improved, cv2.MORPH_OPEN, kernel)
                 
@@ -56,7 +43,6 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 lower_brown_rgb = np.array([150, 150, 0])
                 upper_brown_rgb = np.array([255, 255, 100])
 
-                # Create mask directly in RGB space
                 mask_rgb = cv2.inRange(RGB_image, lower_brown_rgb, upper_brown_rgb)
                 
                 kernel = np.ones((5,5),np.uint8)
@@ -66,27 +52,29 @@ def main(input_video_file: str, output_video_file: str) -> None:
 
                 final_mask = cv2.bitwise_or(mask_hsv_improved,mask_rgb_improved)
                
+                # Finding the max contours 
                 contours, _ = cv2.findContours(final_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                
                 largest_contour = max(contours, key=cv2.contourArea)
                 x, y, w, h = cv2.boundingRect(largest_contour)
             
-                    # Draw a rectangle around the fish
+                # Draw a rectangle around the fish
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 4)
-            
-                object_histogram = compute_histogram(frame, mask=final_mask)
 
-            if between(cap, 3001, 6000):  # For example, between 2s and 5s
+                # SAVE THE OBJECT HSV COLOR HISTOGRAM OF THE MASK OF THE LAST FRAME IN THIS IF-STATEMENT
+                object_histogram = compute_histogram(hsv_image, mask=final_mask)
+
+
+            if between(cap, 3001, 6000):
 
                 hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                
                 # Initialize an empty grayscale image
-                grayscale_image = np.zeros_like(frame[:, :, 0])  # Single channel grayscale image
+                grayscale_image = np.zeros_like(frame[:, :, 0])
                 
-                # Define the size of the region you want to analyze (e.g., 10x10 pixels)
+                # The size of the region that will move over the entire frame
                 region_size = 5
                 
-                # Initialize a list to store MSE (or similarity) values for normalization
+                # List to store dissimilarity values for normalization
                 dissimilarity_values = []
 
                 # Loop over the frame by regions
@@ -95,22 +83,22 @@ def main(input_video_file: str, output_video_file: str) -> None:
                         # Extract the region
                         region = hsv_image[y:y+region_size, x:x+region_size]
                         
-                        # Compute the histogram for this region
+                        # Compute the HSV color histogram for this region
                         region_histogram = compute_histogram(region)
 
-                        # Calculate histogram similarity (correlation)
+                        # Calculate histogram similarity with compareHist
                         similarity = histogram_similarity(object_histogram, region_histogram)
 
-                        # Store the similarity (inversely proportional to dissimilarity) 
-                        dissimilarity_values.append(1 - similarity) # Assuming similarity inversely relates to dissimilarity
+                        # Keep track of the dissimilarity (inverse to similarity) 
+                        dissimilarity_values.append(1 - similarity) 
 
 
-                # Normalize dissimilarity values to span the 0-255 range
+                # Normalize dissimilarity values to get it in the 0-255 range
                 dissimilarity_values = np.array(dissimilarity_values)
                 min_dissimilarity, max_dissimilarity = dissimilarity_values.min(), dissimilarity_values.max()
                 dissimilarity_values_normalized = (dissimilarity_values - min_dissimilarity) / (max_dissimilarity - min_dissimilarity) * 255
 
-                # Update the grayscale image with normalized intensity values, update happens in same order as values stored 
+                # Update the grayscale image with normalized intensity values, update happens in same order as values stored in list
                 index = 0
                 for y in range(0, hsv_image.shape[0], region_size):
                     for x in range(0, hsv_image.shape[1], region_size):
@@ -118,7 +106,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                         grayscale_image[y:y+region_size, x:x+region_size] = intensity
                         index += 1
 
-                # Convert the grayscale image to BGR for display or blending
+                # Convert the grayscale image to BGR for display
                 frame = cv2.cvtColor(grayscale_image, cv2.COLOR_GRAY2BGR)
 
                 
@@ -151,8 +139,7 @@ def compute_histogram(image, mask=None):
 
 def histogram_similarity(hist1, hist2):
     
-    #Calculate similarity between two histograms using a method such as correlation.
-    
+    #Calculate similarity between two histograms using compareHist
     return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
 
 if __name__ == '__main__':
@@ -167,4 +154,4 @@ if __name__ == '__main__':
     main(args.input, args.output)
 
 # white-black scale of the similarity (compareHist) between: the HSV color histogram of the fish by using 1 frame with the fish grabbed at 2s <--> the HSV color
-# histogram of every region of a frame (5x5 pixels), for all frames between 2s-5s
+#histogram of every 5x5 pixels region of a frame , for all frames between during 3s
